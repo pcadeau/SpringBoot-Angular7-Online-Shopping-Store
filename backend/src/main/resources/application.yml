@@ -1,10 +1,10 @@
 ## Spring DATASOURCE (DataSourceAutoConfiguration & DataSourceProperties)
 spring:
   datasource:
-    driver-class-name: org.postgresql.Driver
+    driver-class-name: org.h2.Driver
     username: postgres
     password: root
-    url: jdbc:postgresql://localhost/postgres
+    url: jdbc:h2:mem:testdb
     platform: postgres
     initialization-mode: always
     continue-on-error: true
@@ -18,8 +18,10 @@ spring:
       hibernate:
         temp:
           use_jdbc_metadata_defaults: false;
+        dialect: org.hibernate.dialect.H2Dialect
     database-platform: org.hibernate.dialect.PostgreSQL9Dialect
   #      dialect: org.hibernate.dialect.MySQL5Dialect
+
 
 #  jackson:
 #    default-property-inclusion: non_null
@@ -29,15 +31,16 @@ spring:
 #  freemarker:
 #      cache: false
 
-
-
-
   queries:
     users-query: select email, password, active from users where email=?
     roles-query: select email, role from users where email=?
 server:
   servlet:
     contextPath: /api
-
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
 jwtSecret: me.zhulin
 jwtExpiration: 86400
