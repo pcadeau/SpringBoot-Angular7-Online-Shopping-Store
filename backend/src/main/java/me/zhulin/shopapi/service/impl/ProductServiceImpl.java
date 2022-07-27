@@ -123,9 +123,9 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public void delete(String productId) {
         ProductInfo productInfo = findOne(productId);
-        if (productInfo == null) throw new MyException(ResultEnum.PRODUCT_NOT_EXIST);
-        productInfoRepository.delete(productInfo);
-
+        if (productInfo != null) {
+            productInfoRepository.delete(productInfo);
+        }
     }
 
 
