@@ -19,8 +19,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Created By Zhu Lin on 3/11/2018.
@@ -50,20 +53,40 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public void mergeLocalCart(Collection<ProductInOrder> productInOrders, User user) {
         Cart finalCart = user.getCart();
-        productInOrders.forEach(productInOrder -> {
+        final List<ProductInOrder> oldProd = productInOrders.stream().flatMap(productInOrder -> {
+                Set<ProductInOrder> set = finalCart.getProducts();
+                Optional<ProductInOrder> old =
+                    set.stream().filter(e -> e.getProductId().equals(productInOrder.getProductId())).findFirst();
+                ProductInOrder prod;
+                if (old.isPresent()) {
+                    prod = old.get();
+                    prod.setCount(productInOrder.getCount() + prod.getCount());
+                } else {
+                    return Stream.empty();
+                }
+                return Stream.of(prod);
+            })
+            .collect(Collectors.toList());
+        final List<ProductInOrder> newProd = productInOrders.stream().flatMap(productInOrder -> {
             Set<ProductInOrder> set = finalCart.getProducts();
-            Optional<ProductInOrder> old = set.stream().filter(e -> e.getProductId().equals(productInOrder.getProductId())).findFirst();
+            Optional<ProductInOrder> old =
+                set.stream().filter(e -> e.getProductId().equals(productInOrder.getProductId())).findFirst();
             ProductInOrder prod;
-            if (old.isPresent()) {
-                prod = old.get();
-                prod.setCount(productInOrder.getCount() + prod.getCount());
-            } else {
+            if (!old.isPresent()) {
                 prod = productInOrder;
                 prod.setCart(finalCart);
                 finalCart.getProducts().add(prod);
+            } else {
+                return Stream.empty();
             }
-            productInOrderRepository.save(prod);
-        });
+            return Stream.of(prod);
+        }).collect(Collectors.toList());
+        for (ProductInOrder productInOrder : newProd) {
+            productInOrderRepository.save(productInOrder);
+        }
+        for (ProductInOrder productInOrder : oldProd) {
+            productInOrderRepository.save(productInOrder);
+        }
         cartRepository.save(finalCart);
 
     }
